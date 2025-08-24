@@ -50,7 +50,29 @@ int main(void) {
 
     PRINTF("%d\r\n", I2C_MasterStart(BOARD_ACCEL_I2C_BASEADDR, 0x1DU, kI2C_Read));
 
-    uint8_t rxBuff[7];
+    /* TODO: send a W (0) bit to the slave*/
+    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 0);
+    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 1);
+
+    uint8_t rxBuff[7] = [0, 0, 0, 0, 0, 0, 0, 0];
+    PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, rxBuff, 1U, kI2C_TransferNoStartFlag));
+    PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", rxBuff[0], rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4], rxBuff[5], rxBuff[6]);
+
+    //PRINTF("%d\r\n", GPIO_ReadPinInput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN));
+
+    uint8_t txBuff =  0x03U;
+
+    I2C_MasterWriteBlocking(BOARD_ACCEL_I2C_BASEADDR, &txBuff, 1U, kI2C_TransferNoStopFlag);
+
+
+    PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, rxBuff, 1U, kI2C_TransferNoStartFlag));
+    PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", rxBuff[0], rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4], rxBuff[5], rxBuff[6]);
+
+    I2C_MasterWriteBlocking(BOARD_ACCEL_I2C_BASEADDR, &txBuff, 1U, kkI2C_TransferRepeatedStartFlag);
+
+
+    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 1);
+    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 0);
 
     PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, rxBuff, 1U, kI2C_TransferRepeatedStartFlag));
 
