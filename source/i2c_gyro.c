@@ -23,6 +23,11 @@
 /*
  * @brief   Application entry point.
  */
+
+#define ACCEL_I2C_ADDR 0x1DU
+#define DATA_REG_ADDR 0x0DU
+
+
 int main(void) {
 
     /* Init board hardware. */
@@ -38,9 +43,12 @@ int main(void) {
 
     /* Force the counter to be placed into memory. */
     volatile static int i = 0 ;
-    /* Enter an infinite loop, just incrementing a counter. */
 
-    /* TODO: Initialize master I2C module with default config */
+    uint8_t buffer[7];
+    memset((void *)buffer, 0, sizeof(buffer));
+    uint8_t txBuff =  0x0DU;
+
+    /* Initialize master I2C module with default config */
     i2c_master_config_t MasterConfig;
     I2C_MasterGetDefaultConfig(&MasterConfig);
 
@@ -48,41 +56,28 @@ int main(void) {
 
     I2C_Enable(BOARD_ACCEL_I2C_BASEADDR, true);
 
+    /* Initialize the master by sending a start bit, device address, write bit
+       	 */
+    PRINTF("%d\r\n", I2C_MasterStart(BOARD_ACCEL_I2C_BASEADDR, 0x1DU, kI2C_Write));
+
+    /* Write the address for the register we want to read */
+    I2C_MasterWriteBlocking(BOARD_ACCEL_I2C_BASEADDR, &txBuff, 1U, kI2C_TransferRepeatedStartFlag);
+
     PRINTF("%d\r\n", I2C_MasterStart(BOARD_ACCEL_I2C_BASEADDR, 0x1DU, kI2C_Read));
 
-    /* TODO: send a W (0) bit to the slave*/
-    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 0);
-    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 1);
-
-    uint8_t rxBuff[7] = [0, 0, 0, 0, 0, 0, 0, 0];
-    PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, rxBuff, 1U, kI2C_TransferNoStartFlag));
-    PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", rxBuff[0], rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4], rxBuff[5], rxBuff[6]);
-
-    //PRINTF("%d\r\n", GPIO_ReadPinInput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN));
-
-    uint8_t txBuff =  0x03U;
-
-    I2C_MasterWriteBlocking(BOARD_ACCEL_I2C_BASEADDR, &txBuff, 1U, kI2C_TransferNoStopFlag);
-
-
-    PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, rxBuff, 1U, kI2C_TransferNoStartFlag));
-    PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", rxBuff[0], rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4], rxBuff[5], rxBuff[6]);
-
-    I2C_MasterWriteBlocking(BOARD_ACCEL_I2C_BASEADDR, &txBuff, 1U, kkI2C_TransferRepeatedStartFlag);
-
-
-    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 1);
-    GPIO_WritePinOutput(PORTE, BOARD_INITPINS_ACCEL_SDA_PIN, 0);
-
-    PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, rxBuff, 1U, kI2C_TransferRepeatedStartFlag));
-
+    PRINTF("%d\r\n", I2C_MasterReadBlocking(BOARD_ACCEL_I2C_BASEADDR, buffer, 1U, kI2C_TransferDefaultFlag));
+    PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
     while(1) {
         i++ ;
 
-        PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", rxBuff[0], rxBuff[1], rxBuff[2], rxBuff[3], rxBuff[4], rxBuff[5], rxBuff[6]);
+//        PRINTF("%d\r\n", I2C_MasterStart(BOARD_ACCEL_I2C_BASEADDR, 0x1DU, kI2C_Write));
+//        PRINTF("%d, %d, %d, %d, %d, %d, %d\r\n", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
         /* 'Dummy' NOP to allow source level single stepping of
             tight while() loop */
-        __asm volatile ("nop");
+
+        for (int x = 0; x < 200; x++) {
+        	__asm volatile ("nop");
+        }
     }
     return 0 ;
 }
